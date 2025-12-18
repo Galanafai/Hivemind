@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GodView - Live Reality Protocol</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Courier New', monospace;
+      background: #000;
+      color: #0f0;
+      overflow: hidden;
+    }
+
+    #app {
+      width: 100vw;
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+    }
+
+    #hud {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      font-size: 18px;
+      font-weight: bold;
+      text-shadow: 0 0 10px #0f0, 0 0 20px #0f0;
+      z-index: 1000;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 15px 25px;
+      border: 2px solid #0f0;
+      border-radius: 5px;
+    }
+
+    #status {
+      color: #00ff00;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    #info {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      font-size: 14px;
+      color: #0f0;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 10px 15px;
+      border: 1px solid #0f0;
+      border-radius: 3px;
+      z-index: 1000;
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <div id="hud">
+    GODVIEW SYSTEM STATUS: <span id="status">SCANNING...</span>
+  </div>
+  <div id="info">
+    <div>Protocol: Zenoh v1.0</div>
+    <div>Mode: X-Ray Vision</div>
+    <div>Latency: <span id="latency">--</span>ms</div>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

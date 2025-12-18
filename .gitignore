@@ -1,0 +1,29 @@
+# Ignore build artifacts
+agent/target/
+viewer/node_modules/
+viewer/dist/
+
+# Ignore system files
+.DS_Store
+*.swp
+*.swo
+*~
+
+# Ignore logs
+*.log
+
+# Ignore environment files
+.env
+.env.local
+
+# Ignore IDE files
+.vscode/
+.idea/
+*.iml
+
+# Ignore temporary files
+*.tmp
+*.temp
+
+# Keep the Haar Cascade model
+!agent/haarcascade_frontalface_alt.xml

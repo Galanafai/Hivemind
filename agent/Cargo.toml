@@ -1,0 +1,12 @@
+[package]
+name = "godview_agent"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+zenoh = { version = "1.0.0", features = ["unstable"] }
+opencv = "0.92"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1", features = ["full"] }
+anyhow = "1.0"

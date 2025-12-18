@@ -1,0 +1,14 @@
+{
+  "name": "godview-viewer",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "vite"
+  },
+  "dependencies": {
+    "three": "^0.160.0",
+    "@eclipse-zenoh/zenoh-ts": "^1.0.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
+}
