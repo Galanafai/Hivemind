@@ -27,9 +27,12 @@ use nalgebra::{DVector, DMatrix};
 use uuid::Uuid;
 use rand::rngs::OsRng;
 
+// CARLA mode module
+mod carla_mode;
+
 /// Global Hazard Packet (v3 format)
 #[derive(Serialize, Deserialize, Debug)]
-struct GlobalHazardPacket {
+pub struct GlobalHazardPacket {
     /// The entity with global GPS coordinates
     entity: Entity,
     /// Camera-relative position (for debugging)
@@ -47,8 +50,22 @@ const METERS_PER_DEGREE_LAT: f64 = 111320.0;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    // Check if running in CARLA mode
+    let carla_mode = std::env::var("CARLA_MODE").is_ok();
+    
+    if carla_mode {
+        // Run CARLA mode (reads from stdin)
+        return carla_mode::run_carla_mode().await;
+    }
+    
+    // Otherwise, run normal webcam mode
+    run_webcam_mode().await
+}
+
+/// Run agent in webcam mode (original v3 behavior)
+async fn run_webcam_mode() -> Result<()> {
     println!("╔════════════════════════════════════════════╗");
-    println!("║   GODVIEW AGENT V3 (GLOBAL MODE)          ║");
+    println!("║   GODVIEW AGENT V3 (WEBCAM MODE)          ║");
     println!("╚════════════════════════════════════════════╝");
     println!();
 

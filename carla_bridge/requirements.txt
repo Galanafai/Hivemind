@@ -1,0 +1,20 @@
+# GodView CARLA Bridge - Python Dependencies
+
+# CARLA Python API
+# Note: CARLA Python API comes with CARLA installation
+# Add to PYTHONPATH: export PYTHONPATH=$PYTHONPATH:$HOME/CARLA_0.9.15/PythonAPI/carla/dist/carla-0.9.15-py3.7-linux-x86_64.egg
+
+# Object Detection
+ultralytics>=8.0.0  # YOLOv8
+opencv-python>=4.8.0
+numpy>=1.24.0
+torch>=2.0.0  # Required by ultralytics
+torchvision>=0.15.0
+
+# Zenoh for pub/sub
+eclipse-zenoh>=0.11.0
+
+# Utilities
+pyyaml>=6.0
+matplotlib>=3.7.0
+pandas>=2.0.0
