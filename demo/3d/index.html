@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GodView 3D - Complete Engine Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #00ff88;
+            overflow: hidden;
+        }
+
+        .main-container {
+            display: grid;
+            grid-template-rows: auto 1fr auto auto;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(180deg, rgba(0, 20, 10, 0.95) 0%, rgba(0, 10, 5, 0.9) 100%);
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #00ff8833;
+        }
+
+        .title {
+            font-size: 1.4rem;
+            font-weight: bold;
+            text-shadow: 0 0 20px #00ff88;
+        }
+
+        .stats {
+            display: flex;
+            gap: 40px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            color: #00d4ff;
+            text-shadow: 0 0 15px #00d4ff;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: #666;
+        }
+
+        /* 3D Canvas */
+        #canvas-container {
+            position: relative;
+            background: #000;
+        }
+
+        /* Engine Panels */
+        .engine-panels {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            border-top: 1px solid #00ff8833;
+            background: rgba(0, 10, 5, 0.95);
+        }
+
+        .engine-panel {
+            padding: 12px 15px;
+            border-right: 1px solid #00ff8833;
+            min-height: 140px;
+        }
+
+        .engine-panel:last-child {
+            border-right: none;
+        }
+
+        .panel-header {
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-icon {
+            font-size: 1.2rem;
+        }
+
+        .panel-title {
+            color: #00d4ff;
+            font-weight: bold;
+        }
+
+        .panel-content {
+            font-size: 0.75rem;
+            line-height: 1.6;
+            color: #888;
+        }
+
+        .panel-content .highlight {
+            color: #00ff88;
+        }
+
+        .panel-content .warning {
+            color: #ffcc00;
+        }
+
+        .panel-content .success {
+            color: #00ff88;
+        }
+
+        .panel-content .error {
+            color: #ff4444;
+        }
+
+        /* ASCII Log */
+        .log-panel {
+            background: rgba(0, 0, 0, 0.95);
+            border-top: 1px solid #00ff8833;
+            padding: 10px 15px;
+            height: 120px;
+            overflow-y: auto;
+            font-size: 0.75rem;
+        }
+
+        .log-entry {
+            padding: 2px 0;
+            border-bottom: 1px solid #111;
+        }
+
+        .log-time {
+            color: #666;
+        }
+
+        .log-agent {
+            color: #00d4ff;
+        }
+
+        .log-fusion {
+            color: #00ff88;
+        }
+
+        .log-highlander {
+            color: #a855f7;
+        }
+
+        /* Agent Legend */
+        .legend {
+            position: absolute;
+            left: 15px;
+            top: 15px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: 1px solid #00ff8833;
+            font-size: 0.75rem;
+            z-index: 10;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 5px 0;
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .legend-drone {
+            width: 10px;
+            height: 10px;
+            background: #00d4ff;
+            clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+        }
+
+        /* Controls */
+        .controls {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 10;
+        }
+
+        .ctrl-btn {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #00ff8833;
+            color: #00ff88;
+            padding: 8px 15px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .ctrl-btn:hover {
+            background: #00ff8822;
+        }
+
+        .ctrl-btn.active {
+            background: #00ff88;
+            color: #000;
+        }
+
+        /* Track info overlay */
+        .track-info {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid #00ff88;
+            padding: 15px 30px;
+            border-radius: 8px;
+            text-align: center;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .track-info.visible {
+            opacity: 1;
+        }
+
+        .track-title {
+            font-size: 1rem;
+            margin-bottom: 5px;
+        }
+
+        .track-detail {
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #111;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #00ff8844;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="title">🌐 GODVIEW 3D — DISTRIBUTED GAUSSIAN PERCEPTION</div>
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value" id="agentCount">7</div>
+                    <div class="stat-label">AGENTS</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="trackCount">0</div>
+                    <div class="stat-label">FUSED TRACKS</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="packetRate">0</div>
+                    <div class="stat-label">PACKETS/s</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="reduction">0%</div>
+                    <div class="stat-label">σ REDUCTION</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3D Scene -->
+        <div id="canvas-container">
+            <div class="legend">
+                <div style="color: #00d4ff; margin-bottom: 8px; font-weight: bold;">AGENTS</div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:#ff6b6b"></div> Alpha (Car)
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:#4ecdc4"></div> Beta (Car)
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:#a855f7"></div> Gamma (Car)
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:#ffd93d"></div> Delta (Car)
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:#6366f1"></div> Epsilon (Car)
+                </div>
+                <div class="legend-item">
+                    <div class="legend-drone"></div> Drone-1 (Alt: 30m)
+                </div>
+                <div class="legend-item">
+                    <div class="legend-drone"></div> Drone-2 (Alt: 45m)
+                </div>
+                <div style="color: #ffcc00; margin-top: 10px;">🚶 Pedestrians: 2</div>
+            </div>
+
+            <div class="controls">
+                <button class="ctrl-btn active" id="btnEllipsoids">UNCERTAINTY</button>
+                <button class="ctrl-btn active" id="btnPackets">PACKETS</button>
+                <button class="ctrl-btn active" id="btnDetections">DETECTIONS</button>
+                <button class="ctrl-btn" id="btnFusion">TRIGGER FUSION</button>
+            </div>
+
+            <div class="track-info" id="trackInfo">
+                <div class="track-title">⚡ FUSION COMPLETE</div>
+                <div class="track-detail">7 agents → 1 canonical track | -73% uncertainty</div>
+            </div>
+        </div>
+
+        <!-- Engine Panels -->
+        <div class="engine-panels">
+            <!-- Time Engine -->
+            <div class="engine-panel">
+                <div class="panel-header">
+                    <span class="panel-icon">⏰</span>
+                    <span class="panel-title">TIME ENGINE</span>
+                </div>
+                <div class="panel-content" id="timePanel">
+                    <div>AS-EKF Lag Depth: <span class="highlight">20 states</span></div>
+                    <div>Latest Packet: <span id="timeLatest">—</span></div>
+                    <div>OOSM Corrections: <span class="success" id="oosmCount">0</span></div>
+                    <div style="margin-top:8px; color:#666;">Packet Timeline:</div>
+                    <div id="timeline" style="font-size:0.7rem; color:#555;">waiting...</div>
+                </div>
+            </div>
+
+            <!-- Space Engine -->
+            <div class="engine-panel">
+                <div class="panel-header">
+                    <span class="panel-icon">🌍</span>
+                    <span class="panel-title">SPACE ENGINE</span>
+                </div>
+                <div class="panel-content" id="spacePanel">
+                    <div>H3 Resolution: <span class="highlight">10</span> (~66m cells)</div>
+                    <div>Active Cell: <span id="h3Cell">—</span></div>
+                    <div>Altitude Layers:</div>
+                    <div style="margin-left:10px;">
+                        <span class="success">● 0-10m</span> (Ground)<br>
+                        <span class="warning">● 10-50m</span> (Low Alt)<br>
+                        <span style="color:#00d4ff;">● 50m+</span> (High Alt)
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trust Engine -->
+            <div class="engine-panel">
+                <div class="panel-header">
+                    <span class="panel-icon">🔐</span>
+                    <span class="panel-title">TRUST ENGINE</span>
+                </div>
+                <div class="panel-content" id="trustPanel">
+                    <div>Signature: <span class="highlight">Ed25519</span></div>
+                    <div>Verified Agents:</div>
+                    <div id="verifiedAgents" style="margin-left:10px;">
+                        <span class="success">✓ Alpha</span><br>
+                        <span class="success">✓ Beta</span><br>
+                        <span class="success">✓ Gamma</span><br>
+                        <span class="success">✓ Delta</span><br>
+                        <span class="success">✓ Epsilon</span><br>
+                        <span class="success">✓ Drone-1</span><br>
+                        <span class="success">✓ Drone-2</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tracking Engine -->
+            <div class="engine-panel">
+                <div class="panel-header">
+                    <span class="panel-icon">🎯</span>
+                    <span class="panel-title">TRACKING ENGINE</span>
+                </div>
+                <div class="panel-content" id="trackingPanel">
+                    <div>Algorithm: <span class="highlight">GNN + CI + Highlander</span></div>
+                    <div>Active Tracks: <span id="activeTracks">0</span></div>
+                    <div>Pending Fusions: <span id="pendingFusions">0</span></div>
+                    <div style="margin-top:8px;">Fusion Progress:</div>
+                    <div id="fusionBar" style="background:#222; height:8px; border-radius:4px; margin-top:4px;">
+                        <div id="fusionProgress"
+                            style="background:#00ff88; height:100%; width:0%; border-radius:4px; transition:width 0.3s;">
+                        </div>
+                    </div>
+                    <div id="canonicalId" style="margin-top:8px; color:#a855f7;">Canonical: —</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ASCII Log -->
+        <div class="log-panel" id="logPanel">
+            <div class="log-entry"><span class="log-time">[INIT]</span> GodView 3D simulation starting...</div>
+        </div>
+    </div>
+
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <script>
+        // ============================================
+        // GODVIEW 3D - COMPLETE ENGINE DEMO
+        // ============================================
+
+        // Scene Setup
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x050508);
+        scene.fog = new THREE.FogExp2(0x050508, 0.012);
+
+        const camera = new THREE.PerspectiveCamera(55, container.clientWidth / container.clientHeight, 0.1, 1000);
+        camera.position.set(50, 40, 50);
+        camera.lookAt(0, 0, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.maxPolarAngle = Math.PI / 2.1;
+
+        // Lighting
+        scene.add(new THREE.AmbientLight(0x404040, 0.4));
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+        dirLight.position.set(50, 100, 50);
+        scene.add(dirLight);
+
+        // ============================================
+        // ENVIRONMENT
+        // ============================================
+
+        // Ground with grid
+        const ground = new THREE.Mesh(
+            new THREE.PlaneGeometry(120, 120),
+            new THREE.MeshStandardMaterial({ color: 0x0a0a0f })
+        );
+        ground.rotation.x = -Math.PI / 2;
+        scene.add(ground);
+
+        const grid = new THREE.GridHelper(120, 60, 0x00ff88, 0x002211);
+        scene.add(grid);
+
+        // Roads
+        function createRoad(x, z, w, l, rot = 0) {
+            const road = new THREE.Mesh(
+                new THREE.PlaneGeometry(w, l),
+                new THREE.MeshStandardMaterial({ color: 0x1a1a1a })
+            );
+            road.rotation.x = -Math.PI / 2;
+            road.rotation.z = rot;
+            road.position.set(x, 0.01, z);
+            scene.add(road);
+        }
+        createRoad(0, 0, 10, 100, 0);
+        createRoad(0, 0, 10, 100, Math.PI / 2);
+
+        // Buildings
+        for (let i = 0; i < 8; i++) {
+            const x = (Math.random() - 0.5) * 80;
+            const z = (Math.random() - 0.5) * 80;
+            if (Math.abs(x) < 8 || Math.abs(z) < 8) continue;
+            const h = 5 + Math.random() * 15;
+            const building = new THREE.Mesh(
+                new THREE.BoxGeometry(6 + Math.random() * 4, h, 6 + Math.random() * 4),
+                new THREE.MeshStandardMaterial({ color: 0x151520 })
+            );
+            building.position.set(x, h / 2, z);
+            scene.add(building);
+        }
+
+        // ============================================
+        // SIMULATION STATE
+        // ============================================
+
+        const agents = [];
+        const pedestrians = [];
+        const packets = [];
+        const detectionBeams = [];
+        let tracks = new Map();
+        let packetCount = 0;
+        let oosmCount = 0;
+        let showEllipsoids = true;
+        let showPackets = true;
+        let showDetections = true;
+        let fusionTriggered = false;
+
+        // ============================================
+        // AGENTS (CARS + DRONES)
+        // ============================================
+
+        const agentConfigs = [
+            { name: 'Alpha', color: 0xff6b6b, type: 'car', path: [[−35, 0], [35, 0]], uncertainty: 4.5 },
+            { name: 'Beta', color: 0x4ecdc4, type: 'car', path: [[35, 0], [−35, 0]], uncertainty: 3.8 },
+            { name: 'Gamma', color: 0xa855f7, type: 'car', path: [[0,−35], [0, 35]], uncertainty: 5.2 },
+            { name: 'Delta', color: 0xffd93d, type: 'car', path: [[0, 35], [0,−35]], uncertainty: 4.0 },
+            { name: 'Epsilon', color: 0x6366f1, type: 'car', path: [[−25,−25], [25, 25]], uncertainty: 6.1 },
+            { name: 'Drone-1', color: 0x00d4ff, type: 'drone', altitude: 30, path: [[−30,−30], [30, 30]], uncertainty: 3.2 },
+            { name: 'Drone-2', color: 0x00ffcc, type: 'drone', altitude: 45, path: [[30,−30], [−30, 30]], uncertainty: 2.8 },
+        ];
+
+        class Agent {
+            constructor(config) {
+                this.name = config.name;
+                this.color = config.color;
+                this.type = config.type;
+                this.altitude = config.altitude || 0.5;
+                this.uncertainty = config.uncertainty;
+                this.path = config.path.map(p => new THREE.Vector3(p[0], this.altitude, p[1]));
+                this.pathIdx = 0;
+                this.pathDir = 1;
+                this.id = Math.random().toString(36).substr(2, 8);
+
+                // Mesh
+                if (this.type === 'car') {
+                    this.mesh = new THREE.Mesh(
+                        new THREE.BoxGeometry(2, 0.8, 4),
+                        new THREE.MeshStandardMaterial({ color: this.color })
+                    );
+                } else {
+                    // Drone - wider, flatter
+                    this.mesh = new THREE.Mesh(
+                        new THREE.CylinderGeometry(1.5, 1.5, 0.5, 8),
+                        new THREE.MeshStandardMaterial({ color: this.color, emissive: this.color, emissiveIntensity: 0.3 })
+                    );
+                }
+                this.mesh.position.copy(this.path[0]);
+                scene.add(this.mesh);
+
+                // Ellipsoid
+                const ellGeo = new THREE.SphereGeometry(1, 24, 12);
+                this.ellipsoid = new THREE.Mesh(ellGeo, new THREE.MeshBasicMaterial({
+                    color: this.color, transparent: true, opacity: 0.15, wireframe: true
+                }));
+                this.ellipsoidCore = new THREE.Mesh(ellGeo.clone(), new THREE.MeshBasicMaterial({
+                    color: this.color, transparent: true, opacity: 0.08
+                }));
+                scene.add(this.ellipsoid);
+                scene.add(this.ellipsoidCore);
+
+                this.updateEllipsoid();
+            }
+
+            update(dt) {
+                // Move along path
+                const target = this.path[this.pathIdx];
+                const dir = new THREE.Vector3().subVectors(target, this.mesh.position);
+                if (dir.length() < 1) {
+                    this.pathIdx += this.pathDir;
+                    if (this.pathIdx >= this.path.length || this.pathIdx < 0) {
+                        this.pathDir *= -1;
+                        this.pathIdx += this.pathDir * 2;
+                    }
+                } else {
+                    dir.normalize();
+                    this.mesh.position.add(dir.multiplyScalar(4 * dt));
+                    if (this.type === 'car') this.mesh.lookAt(target);
+                }
+                this.updateEllipsoid();
+            }
+
+            updateEllipsoid() {
+                const pos = this.mesh.position.clone();
+                pos.y += 1;
+                this.ellipsoid.position.copy(pos);
+                this.ellipsoidCore.position.copy(pos);
+
+                const pulse = 1 + Math.sin(Date.now() * 0.003) * 0.05;
+                const scaleY = this.type === 'drone' ? this.uncertainty * 0.3 : this.uncertainty * 0.5;
+                this.ellipsoid.scale.set(this.uncertainty * pulse, scaleY * pulse, this.uncertainty * pulse);
+                this.ellipsoidCore.scale.copy(this.ellipsoid.scale);
+
+                this.ellipsoid.visible = showEllipsoids && !fusionTriggered;
+                this.ellipsoidCore.visible = showEllipsoids && !fusionTriggered;
+            }
+
+            getPosition() { return this.mesh.position.clone(); }
+        }
+
+        agentConfigs.forEach(c => agents.push(new Agent(c)));
+
+        // ============================================
+        // PEDESTRIANS
+        // ============================================
+
+        class Pedestrian {
+            constructor(x, z) {
+                this.id = 'ped_' + Math.random().toString(36).substr(2, 4);
+                this.mesh = new THREE.Mesh(
+                    new THREE.CapsuleGeometry(0.3, 1, 4, 8),
+                    new THREE.MeshStandardMaterial({ color: 0xffcc00 })
+                );
+                this.mesh.position.set(x, 0.8, z);
+                scene.add(this.mesh);
+
+                this.targetX = x;
+                this.targetZ = z;
+                this.speed = 0.5 + Math.random() * 0.5;
+            }
+
+            update(dt) {
+                // Random walk
+                if (Math.random() < 0.02) {
+                    this.targetX = (Math.random() - 0.5) * 15;
+                    this.targetZ = (Math.random() - 0.5) * 15;
+                }
+                const dx = this.targetX - this.mesh.position.x;
+                const dz = this.targetZ - this.mesh.position.z;
+                this.mesh.position.x += dx * dt * this.speed;
+                this.mesh.position.z += dz * dt * this.speed;
+            }
+
+            getPosition() { return this.mesh.position.clone(); }
+        }
+
+        pedestrians.push(new Pedestrian(3, 2));
+        pedestrians.push(new Pedestrian(-4, -3));
+
+        // ============================================
+        // DETECTION BEAMS
+        // ============================================
+
+        function createDetectionBeam(from, to, color) {
+            const points = [from.clone(), to.clone()];
+            const geo = new THREE.BufferGeometry().setFromPoints(points);
+            const mat = new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: 0.6 });
+            const line = new THREE.Line(geo, mat);
+            line.userData.age = 0;
+            line.userData.maxAge = 1.5;
+            scene.add(line);
+            detectionBeams.push(line);
+        }
+
+        // ============================================
+        // DATA PACKETS
+        // ============================================
+
+        class Packet {
+            constructor(from, to) {
+                this.from = from.clone();
+                this.to = to.clone();
+                this.progress = 0;
+                this.mesh = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.25, 8, 8),
+                    new THREE.MeshBasicMaterial({ color: 0x00d4ff })
+                );
+                this.mesh.position.copy(from);
+                scene.add(this.mesh);
+                this.alive = true;
+            }
+
+            update(dt) {
+                this.progress += dt * 2;
+                if (this.progress >= 1) {
+                    scene.remove(this.mesh);
+                    this.alive = false;
+                    return;
+                }
+                this.mesh.position.lerpVectors(this.from, this.to, this.progress);
+                this.mesh.position.y += Math.sin(this.progress * Math.PI) * 3;
+                this.mesh.visible = showPackets;
+            }
+        }
+
+        // ============================================
+        // FUSED TRACK
+        // ============================================
+
+        let fusedEllipsoid = null;
+
+        function createFusedTrack() {
+            const centroid = new THREE.Vector3();
+            agents.forEach(a => centroid.add(a.getPosition()));
+            centroid.divideScalar(agents.length);
+
+            const avgUnc = agents.reduce((s, a) => s + a.uncertainty, 0) / agents.length;
+            const fusedUnc = avgUnc * 0.27; // 73% reduction
+
+            if (fusedEllipsoid) scene.remove(fusedEllipsoid);
+
+            fusedEllipsoid = new THREE.Mesh(
+                new THREE.SphereGeometry(1, 32, 16),
+                new THREE.MeshBasicMaterial({ color: 0x00ff88, transparent: true, opacity: 0.4, wireframe: true })
+            );
+            fusedEllipsoid.position.copy(centroid);
+            fusedEllipsoid.position.y += 1;
+            fusedEllipsoid.scale.set(fusedUnc, fusedUnc * 0.5, fusedUnc);
+            scene.add(fusedEllipsoid);
+
+            document.getElementById('reduction').textContent = '-73%';
+            document.getElementById('trackCount').textContent = '1';
+            document.getElementById('canonicalId').textContent = 'Canonical: ' + agents[0].id;
+            document.getElementById('fusionProgress').style.width = '100%';
+            document.getElementById('trackInfo').classList.add('visible');
+
+            addLog('⚡ FUSION COMPLETE: 7 agents → 1 track', 'fusion');
+            addLog('🏆 HIGHLANDER: Canonical ID = ' + agents[0].id, 'highlander');
+        }
+
+        function removeFusedTrack() {
+            if (fusedEllipsoid) {
+                scene.remove(fusedEllipsoid);
+                fusedEllipsoid = null;
+            }
+            document.getElementById('reduction').textContent = '0%';
+            document.getElementById('trackCount').textContent = '0';
+            document.getElementById('canonicalId').textContent = 'Canonical: —';
+            document.getElementById('fusionProgress').style.width = '0%';
+            document.getElementById('trackInfo').classList.remove('visible');
+        }
+
+        // ============================================
+        // LOGGING
+        // ============================================
+
+        function addLog(msg, type = 'default') {
+            const panel = document.getElementById('logPanel');
+            const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+
+            let cls = '';
+            if (type === 'fusion') cls = 'log-fusion';
+            else if (type === 'highlander') cls = 'log-highlander';
+            else if (type === 'agent') cls = 'log-agent';
+
+            entry.innerHTML = `<span class="log-time">[${time}]</span> <span class="${cls}">${msg}</span>`;
+            panel.appendChild(entry);
+            panel.scrollTop = panel.scrollHeight;
+
+            // Limit log size
+            while (panel.children.length > 50) panel.removeChild(panel.firstChild);
+        }
+
+        // ============================================
+        // SIMULATION TICK
+        // ============================================
+
+        let lastTime = performance.now();
+        let tickCounter = 0;
+
+        function simulate() {
+            const now = performance.now();
+            const dt = (now - lastTime) / 1000;
+            lastTime = now;
+            tickCounter++;
+
+            // Update agents
+            agents.forEach(a => a.update(dt));
+
+            // Update pedestrians
+            pedestrians.forEach(p => p.update(dt));
+
+            // Random detections
+            if (tickCounter % 30 === 0) {
+                const agent = agents[Math.floor(Math.random() * agents.length)];
+                const ped = pedestrians[Math.floor(Math.random() * pedestrians.length)];
+
+                if (showDetections) {
+                    createDetectionBeam(agent.getPosition(), ped.getPosition(), agent.color);
+                }
+
+                addLog(`${agent.name} detected ${ped.id} @ [${ped.mesh.position.x.toFixed(1)}, ${ped.mesh.position.z.toFixed(1)}]`, 'agent');
+
+                // Update time panel
+                document.getElementById('timeLatest').textContent = Date.now().toString().slice(-6);
+
+                // Occasional OOSM
+                if (Math.random() < 0.1) {
+                    oosmCount++;
+                    document.getElementById('oosmCount').textContent = oosmCount;
+                    addLog('⏰ OOSM packet reordered (lag: ' + Math.floor(Math.random() * 100) + 'ms)', 'default');
+                }
+            }
+
+            // Spawn packets
+            if (tickCounter % 10 === 0 && agents.length >= 2) {
+                const from = agents[Math.floor(Math.random() * agents.length)];
+                let to;
+                do { to = agents[Math.floor(Math.random() * agents.length)]; } while (to === from);
+                packets.push(new Packet(
+                    from.getPosition().add(new THREE.Vector3(0, 1, 0)),
+                    to.getPosition().add(new THREE.Vector3(0, 1, 0))
+                ));
+                packetCount++;
+            }
+
+            // Update packets
+            for (let i = packets.length - 1; i >= 0; i--) {
+                packets[i].update(dt);
+                if (!packets[i].alive) packets.splice(i, 1);
+            }
+
+            // Update detection beams
+            for (let i = detectionBeams.length - 1; i >= 0; i--) {
+                detectionBeams[i].userData.age += dt;
+                detectionBeams[i].material.opacity = 0.6 * (1 - detectionBeams[i].userData.age / detectionBeams[i].userData.maxAge);
+                if (detectionBeams[i].userData.age >= detectionBeams[i].userData.maxAge) {
+                    scene.remove(detectionBeams[i]);
+                    detectionBeams.splice(i, 1);
+                }
+            }
+
+            // Update fused ellipsoid position
+            if (fusedEllipsoid) {
+                const centroid = new THREE.Vector3();
+                agents.forEach(a => centroid.add(a.getPosition()));
+                centroid.divideScalar(agents.length);
+                fusedEllipsoid.position.copy(centroid);
+                fusedEllipsoid.position.y += 1;
+            }
+
+            // Update H3 cell display
+            if (tickCounter % 60 === 0) {
+                document.getElementById('h3Cell').textContent = '8a2f' + Math.random().toString(36).substr(2, 4);
+            }
+
+            // Update timeline
+            if (tickCounter % 20 === 0) {
+                const t = (Date.now() / 1000).toFixed(3);
+                document.getElementById('timeline').textContent = `t=${t} → t=${(parseFloat(t) - 0.001).toFixed(3)} → t=${(parseFloat(t) - 0.002).toFixed(3)}`;
+            }
+
+            // Update fusion progress if not triggered
+            if (!fusionTriggered) {
+                const prog = Math.min(100, tickCounter % 200 / 2);
+                document.getElementById('fusionProgress').style.width = prog + '%';
+                document.getElementById('pendingFusions').textContent = Math.floor(prog / 20);
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+            requestAnimationFrame(simulate);
+        }
+
+        // Packet rate display
+        setInterval(() => {
+            document.getElementById('packetRate').textContent = packetCount;
+            packetCount = 0;
+        }, 1000);
+
+        // ============================================
+        // CONTROLS
+        // ============================================
+
+        document.getElementById('btnEllipsoids').onclick = function () {
+            showEllipsoids = !showEllipsoids;
+            this.classList.toggle('active');
+        };
+
+        document.getElementById('btnPackets').onclick = function () {
+            showPackets = !showPackets;
+            this.classList.toggle('active');
+        };
+
+        document.getElementById('btnDetections').onclick = function () {
+            showDetections = !showDetections;
+            this.classList.toggle('active');
+        };
+
+        document.getElementById('btnFusion').onclick = function () {
+            fusionTriggered = !fusionTriggered;
+            this.classList.toggle('active');
+            if (fusionTriggered) {
+                createFusedTrack();
+            } else {
+                removeFusedTrack();
+            }
+        };
+
+        // Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        });
+
+        // Start
+        addLog('✓ 5 cars + 2 drones initialized');
+        addLog('✓ 2 pedestrians spawned at intersection');
+        addLog('✓ All 4 engines online');
+        simulate();
+    </script>
+</body>
+
+</html>

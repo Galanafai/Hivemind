@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GodView - Distributed Gaussian Fusion Demo</title>
+    <title>GodView - Distributed Gaussian Perception</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -12,504 +13,774 @@
             box-sizing: border-box;
         }
 
-        body {
-            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #0a0a0a 100%);
-            min-height: 100vh;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            color: #fff;
-            overflow: hidden;
+        :root {
+            --bg-dark: #0a0b0f;
+            --bg-section: #12141a;
+            --accent-cyan: #00d4ff;
+            --accent-green: #00ff88;
+            --accent-purple: #a855f7;
+            --accent-red: #ff4444;
+            --text-primary: #ffffff;
+            --text-secondary: #8892a0;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            height: 100vh;
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
-        }
-
-        header {
+            justify-content: center;
+            align-items: center;
             text-align: center;
-            padding: 20px 0;
-        }
-
-        h1 {
-            font-size: 2.5rem;
-            background: linear-gradient(90deg, #00d4ff, #00ff88, #ff00ff);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            margin-bottom: 10px;
-        }
-
-        .subtitle {
-            color: #888;
-            font-size: 1.1rem;
-        }
-
-        .demo-area {
-            flex: 1;
-            display: flex;
-            gap: 40px;
-            padding: 20px;
-        }
-
-        .visualization {
-            flex: 2;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            background: radial-gradient(ellipse at center, #1a1f2e 0%, var(--bg-dark) 70%);
             position: relative;
             overflow: hidden;
         }
 
-        .visualization svg {
-            width: 100%;
-            height: 100%;
-        }
-
-        .stats-panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .stat-card {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 15px;
-            padding: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .stat-card h3 {
-            font-size: 0.9rem;
-            color: #888;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .stat-value {
-            font-size: 2rem;
-            font-weight: bold;
-        }
-
-        .agent-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .agent-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 8px;
-            opacity: 0;
-            transform: translateX(-20px);
-            transition: all 0.5s ease;
-        }
-
-        .agent-item.visible {
-            opacity: 1;
-            transform: translateX(0);
-        }
-
-        .agent-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-        }
-
-        .agent-info {
-            flex: 1;
-        }
-
-        .agent-id {
-            font-size: 0.8rem;
-            color: #666;
-            font-family: monospace;
-        }
-
-        .uncertainty {
-            font-size: 1.1rem;
-            font-weight: bold;
-        }
-
-        .reduction-badge {
-            background: linear-gradient(135deg, #00ff88, #00d4ff);
-            color: #000;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-weight: bold;
-            font-size: 0.9rem;
-        }
-
-        .phase-indicator {
-            text-align: center;
-            padding: 15px;
-            font-size: 1.2rem;
-            color: #00d4ff;
-            min-height: 60px;
-        }
-
-        .controls {
-            text-align: center;
-            padding: 20px;
-        }
-
-        button {
-            background: linear-gradient(135deg, #00d4ff, #00ff88);
-            border: none;
-            padding: 15px 40px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            border-radius: 30px;
-            cursor: pointer;
-            color: #000;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
-        }
-
-        /* Ellipse styles */
-        .gaussian-ellipse {
-            fill-opacity: 0.3;
-            stroke-width: 2;
-            transition: all 1s ease;
-        }
-
-        .agent1 {
-            fill: #ff4444;
-            stroke: #ff6666;
-        }
-
-        .agent2 {
-            fill: #44ff44;
-            stroke: #66ff66;
-        }
-
-        .agent3 {
-            fill: #4444ff;
-            stroke: #6666ff;
-        }
-
-        .fused {
-            fill: #ffffff;
-            stroke: #00ff88;
-            stroke-width: 3;
-        }
-
-        .label {
-            font-size: 14px;
-            font-weight: bold;
-            fill: white;
-            text-anchor: middle;
+        .hero::before {
+            content: '';
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(0, 212, 255, 0.1) 0%, transparent 70%);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: pulse 4s ease-in-out infinite;
         }
 
         @keyframes pulse {
 
             0%,
             100% {
-                transform: scale(1);
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.5;
             }
 
             50% {
-                transform: scale(1.05);
+                transform: translate(-50%, -50%) scale(1.2);
+                opacity: 0.8;
             }
         }
 
-        .pulsing {
-            animation: pulse 1s ease-in-out infinite;
+        .hero h1 {
+            font-size: 4rem;
+            font-weight: 900;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-green), var(--accent-purple));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            position: relative;
+            z-index: 1;
         }
 
-        .hidden {
+        .hero .subtitle {
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin-bottom: 40px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero .highlight {
+            color: var(--accent-cyan);
+            font-weight: 600;
+        }
+
+        .cta-button {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-green));
+            color: #000;
+            border: none;
+            padding: 18px 50px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 20px 40px rgba(0, 212, 255, 0.3);
+        }
+
+        /* Section Styles */
+        section {
+            min-height: 100vh;
+            padding: 100px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .section-number {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 15px;
+        }
+
+        .section-title {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .section-desc {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* City Scene */
+        .city-scene {
+            width: 100%;
+            max-width: 900px;
+            height: 500px;
+            background: var(--bg-section);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .road {
+            position: absolute;
+            background: #2a2d35;
+        }
+
+        .road-h {
+            width: 100%;
+            height: 120px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .road-v {
+            width: 120px;
+            height: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .road-line {
+            position: absolute;
+            background: #ffd700;
+            opacity: 0.5;
+        }
+
+        .car {
+            position: absolute;
+            width: 60px;
+            height: 30px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            transition: all 0.5s ease;
+            z-index: 10;
+        }
+
+        .car-a {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a5a);
+            top: 80px;
+            left: 150px;
+        }
+
+        .car-b {
+            background: linear-gradient(135deg, #4ecdc4, #44a3a0);
+            top: 250px;
+            right: 100px;
+            transform: rotate(180deg);
+        }
+
+        .car-c {
+            background: linear-gradient(135deg, #a855f7, #9333ea);
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%) rotate(90deg);
+        }
+
+        .pedestrian {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #ffd93d, #f9c846);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            z-index: 20;
+            box-shadow: 0 0 30px rgba(255, 217, 61, 0.5);
+        }
+
+        .uncertainty-cloud {
+            position: absolute;
+            border-radius: 50%;
             opacity: 0;
+            transition: all 0.8s ease;
+            pointer-events: none;
         }
 
-        .fadeIn {
-            animation: fadeIn 0.5s forwards;
+        .cloud-a {
+            width: 200px;
+            height: 150px;
+            background: radial-gradient(ellipse, rgba(255, 107, 107, 0.3), transparent);
+            border: 2px solid rgba(255, 107, 107, 0.5);
+            top: 40%;
+            left: 30%;
+            transform: translate(-50%, -50%);
         }
 
-        @keyframes fadeIn {
-            to {
+        .cloud-b {
+            width: 150px;
+            height: 120px;
+            background: radial-gradient(ellipse, rgba(78, 205, 196, 0.3), transparent);
+            border: 2px solid rgba(78, 205, 196, 0.5);
+            top: 45%;
+            right: 25%;
+            transform: translate(50%, -50%);
+        }
+
+        .cloud-c {
+            width: 250px;
+            height: 180px;
+            background: radial-gradient(ellipse, rgba(168, 85, 247, 0.3), transparent);
+            border: 2px solid rgba(168, 85, 247, 0.5);
+            bottom: 20%;
+            left: 50%;
+            transform: translate(-50%, 50%);
+        }
+
+        .cloud-fused {
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(ellipse, rgba(0, 255, 136, 0.4), transparent);
+            border: 3px solid var(--accent-green);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 40px rgba(0, 255, 136, 0.5);
+        }
+
+        /* Data Packets */
+        .packet {
+            position: absolute;
+            width: 20px;
+            height: 12px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-green));
+            border-radius: 6px;
+            opacity: 0;
+            z-index: 15;
+        }
+
+        /* Comparison Section */
+        .comparison {
+            display: flex;
+            gap: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        .compare-card {
+            flex: 1;
+            min-width: 300px;
+            max-width: 450px;
+            background: var(--bg-section);
+            border-radius: 20px;
+            padding: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .compare-card.bad {
+            border-color: rgba(255, 68, 68, 0.3);
+        }
+
+        .compare-card.good {
+            border-color: rgba(0, 255, 136, 0.3);
+        }
+
+        .compare-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+
+        .compare-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .compare-stat {
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin: 20px 0;
+        }
+
+        .compare-card.bad .compare-stat {
+            color: var(--accent-red);
+        }
+
+        .compare-card.good .compare-stat {
+            color: var(--accent-green);
+        }
+
+        /* Engine Cards */
+        .engines-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .engine-card {
+            background: var(--bg-section);
+            border-radius: 20px;
+            padding: 35px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .engine-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-cyan);
+        }
+
+        .engine-icon {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+
+        .engine-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--accent-cyan);
+        }
+
+        .engine-problem {
+            font-size: 0.95rem;
+            color: var(--accent-red);
+            margin-bottom: 15px;
+        }
+
+        .engine-solution {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+        }
+
+        /* Result Section */
+        .result-display {
+            background: var(--bg-section);
+            border-radius: 20px;
+            padding: 50px;
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            text-align: center;
+            max-width: 600px;
+        }
+
+        .result-stat {
+            font-size: 5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-green));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .result-label {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-top: 10px;
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+            margin-top: 40px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-green);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Demo Controls */
+        .demo-controls {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(18, 20, 26, 0.95);
+            padding: 15px 30px;
+            border-radius: 50px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            gap: 20px;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .demo-btn {
+            background: transparent;
+            border: 2px solid var(--accent-cyan);
+            color: var(--accent-cyan);
+            padding: 12px 25px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .demo-btn:hover,
+        .demo-btn.active {
+            background: var(--accent-cyan);
+            color: #000;
+        }
+
+        /* Animations */
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        @keyframes packetMove {
+            0% {
                 opacity: 1;
             }
+
+            100% {
+                opacity: 0;
+            }
+        }
+
+        .visible {
+            opacity: 1 !important;
+        }
+
+        /* Footer */
+        footer {
+            padding: 60px 40px;
+            text-align: center;
+            background: var(--bg-section);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        footer a {
+            color: var(--accent-cyan);
+            text-decoration: none;
+            font-weight: 600;
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <header>
-            <h1>🌐 GodView Distributed Fusion</h1>
-            <p class="subtitle">Gaussian Splat Fusion Demo • No Video, Just Math</p>
-        </header>
+    <!-- Hero -->
+    <section class="hero">
+        <h1>GodView</h1>
+        <p class="subtitle">
+            Distributed perception without video. Share <span class="highlight">6D Gaussian uncertainty splats</span>,
+            not bandwidth-heavy streams.
+        </p>
+        <button class="cta-button" onclick="startDemo()">▶ Watch the Demo</button>
+    </section>
 
-        <div class="demo-area">
-            <div class="visualization">
-                <svg viewBox="0 0 600 400" id="canvas">
-                    <!-- Grid background -->
-                    <defs>
-                        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1" />
-                        </pattern>
-                    </defs>
-                    <rect width="100%" height="100%" fill="url(#grid)" />
+    <!-- Section 1: The Problem -->
+    <section id="problem" style="background: var(--bg-section);">
+        <div class="section-header">
+            <div class="section-number">The Problem</div>
+            <h2 class="section-title">Partial Views, High Uncertainty</h2>
+            <p class="section-desc">
+                Each autonomous vehicle sees the world from its own angle.
+                Same pedestrian, three different uncertain estimates.
+            </p>
+        </div>
 
-                    <!-- Agent ellipses (uncertainty) -->
-                    <g id="ellipses">
-                        <ellipse id="e1" class="gaussian-ellipse agent1 hidden" cx="200" cy="180" rx="80" ry="50" />
-                        <ellipse id="e2" class="gaussian-ellipse agent2 hidden" cx="350" cy="150" rx="50" ry="35" />
-                        <ellipse id="e3" class="gaussian-ellipse agent3 hidden" cx="280" cy="280" rx="100" ry="70" />
-                        <ellipse id="fused" class="gaussian-ellipse fused hidden" cx="280" cy="195" rx="30" ry="22" />
-                    </g>
+        <div class="city-scene" id="cityScene">
+            <!-- Roads -->
+            <div class="road road-h"></div>
+            <div class="road road-v"></div>
 
-                    <!-- Labels -->
-                    <g id="labels">
-                        <text id="l1" class="label hidden" x="200" y="185">Agent 1</text>
-                        <text id="l2" class="label hidden" x="350" y="155">Agent 2</text>
-                        <text id="l3" class="label hidden" x="280" y="285">Agent 3</text>
-                        <text id="lf" class="label hidden" x="280" y="200"
-                            style="fill: #00ff88; font-size: 16px;">FUSED</text>
-                    </g>
+            <!-- Cars -->
+            <div class="car car-a">🚗</div>
+            <div class="car car-b">🚙</div>
+            <div class="car car-c">🚕</div>
 
-                    <!-- Center crosshair -->
-                    <g id="crosshair" class="hidden">
-                        <line x1="270" y1="195" x2="290" y2="195" stroke="#00ff88" stroke-width="2" />
-                        <line x1="280" y1="185" x2="280" y2="205" stroke="#00ff88" stroke-width="2" />
-                    </g>
-                </svg>
+            <!-- Pedestrian -->
+            <div class="pedestrian">👤</div>
+
+            <!-- Uncertainty Clouds -->
+            <div class="uncertainty-cloud cloud-a" id="cloudA"></div>
+            <div class="uncertainty-cloud cloud-b" id="cloudB"></div>
+            <div class="uncertainty-cloud cloud-c" id="cloudC"></div>
+            <div class="uncertainty-cloud cloud-fused" id="cloudFused"></div>
+
+            <!-- Data Packets -->
+            <div class="packet" id="packet1"></div>
+            <div class="packet" id="packet2"></div>
+            <div class="packet" id="packet3"></div>
+        </div>
+    </section>
+
+    <!-- Section 2: Video vs Gaussian -->
+    <section id="comparison">
+        <div class="section-header">
+            <div class="section-number">The Breakthrough</div>
+            <h2 class="section-title">Video vs. Gaussian Splats</h2>
+            <p class="section-desc">
+                Why stream megabytes when you can send bytes?
+            </p>
+        </div>
+
+        <div class="comparison">
+            <div class="compare-card bad">
+                <div class="compare-icon">📹</div>
+                <div class="compare-title">Traditional: Stream Video</div>
+                <p>Raw camera feeds between vehicles</p>
+                <div class="compare-stat">100 MB/s</div>
+                <p>Network overload. Latency. Privacy issues.</p>
             </div>
 
-            <div class="stats-panel">
-                <div class="stat-card">
-                    <h3>Phase</h3>
-                    <div class="phase-indicator" id="phase">Ready to start</div>
-                </div>
+            <div class="compare-card good">
+                <div class="compare-icon">🔮</div>
+                <div class="compare-title">GodView: Gaussian Splats</div>
+                <p>6D uncertainty ellipsoids (position + velocity)</p>
+                <div class="compare-stat">200 bytes</div>
+                <p>Instant fusion. Bandwidth efficient. Math, not pixels.</p>
+            </div>
+        </div>
+    </section>
 
-                <div class="stat-card">
-                    <h3>Agent Detections</h3>
-                    <div class="agent-list" id="agent-list">
-                        <div class="agent-item" id="a1">
-                            <div class="agent-dot" style="background: #ff4444;"></div>
-                            <div class="agent-info">
-                                <div class="agent-id">Agent 1 • 7f3a...</div>
-                                <div class="uncertainty" style="color: #ff4444;">± 5.2m</div>
-                            </div>
-                        </div>
-                        <div class="agent-item" id="a2">
-                            <div class="agent-dot" style="background: #44ff44;"></div>
-                            <div class="agent-info">
-                                <div class="agent-id">Agent 2 • 2b1c...</div>
-                                <div class="uncertainty" style="color: #44ff44;">± 3.1m</div>
-                            </div>
-                        </div>
-                        <div class="agent-item" id="a3">
-                            <div class="agent-dot" style="background: #4444ff;"></div>
-                            <div class="agent-info">
-                                <div class="agent-id">Agent 3 • a9e4...</div>
-                                <div class="uncertainty" style="color: #4444ff;">± 8.7m</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+    <!-- Section 3: The Four Engines -->
+    <section id="engines" style="background: var(--bg-section);">
+        <div class="section-header">
+            <div class="section-number">The Architecture</div>
+            <h2 class="section-title">Four Engines, Zero Compromises</h2>
+            <p class="section-desc">
+                Each engine solves a critical flaw in distributed perception.
+            </p>
+        </div>
 
-                <div class="stat-card">
-                    <h3>Fusion Result</h3>
-                    <div id="fusion-result">
-                        <div class="stat-value" id="result-uncertainty">—</div>
-                        <div id="reduction" style="margin-top: 10px;"></div>
-                    </div>
-                </div>
+        <div class="engines-grid">
+            <div class="engine-card">
+                <div class="engine-icon">⏰</div>
+                <div class="engine-name">Time Engine</div>
+                <div class="engine-problem">❌ Data arrives out of order (network latency)</div>
+                <div class="engine-solution">✅ Augmented State EKF keeps 20 historical states. Late data still fuses
+                    correctly.</div>
+            </div>
 
-                <div class="stat-card">
-                    <h3>Highlander CRDT</h3>
-                    <div id="highlander" style="font-family: monospace; font-size: 0.9rem; color: #666;">
-                        Waiting...
-                    </div>
+            <div class="engine-card">
+                <div class="engine-icon">🌍</div>
+                <div class="engine-name">Space Engine</div>
+                <div class="engine-problem">❌ Drone at 100m ≠ car at ground level</div>
+                <div class="engine-solution">✅ 3D hexagonal grid (H3) + altitude layers. No false collisions.</div>
+            </div>
+
+            <div class="engine-card">
+                <div class="engine-icon">🔐</div>
+                <div class="engine-name">Trust Engine</div>
+                <div class="engine-problem">❌ What if someone sends fake data?</div>
+                <div class="engine-solution">✅ Ed25519 signatures + capability tokens. Every packet is verified.</div>
+            </div>
+
+            <div class="engine-card">
+                <div class="engine-icon">🎯</div>
+                <div class="engine-name">Tracking Engine</div>
+                <div class="engine-problem">❌ 3 cars see same pedestrian → 3 ghosts?</div>
+                <div class="engine-solution">✅ Covariance Intersection + Highlander CRDT. 3 detections → 1 track.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 4: The Result -->
+    <section id="result">
+        <div class="section-header">
+            <div class="section-number">The Result</div>
+            <h2 class="section-title">Collective Intelligence</h2>
+            <p class="section-desc">
+                Three uncertain views become one precise track.
+            </p>
+        </div>
+
+        <div class="result-display">
+            <div class="result-stat">-71%</div>
+            <div class="result-label">Uncertainty Reduction</div>
+
+            <div class="stats-row">
+                <div class="stat-item">
+                    <div class="stat-value">3 → 1</div>
+                    <div class="stat-label">Tracks Merged</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">99.7%</div>
+                    <div class="stat-label">Bandwidth Saved</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">&lt;10ms</div>
+                    <div class="stat-label">Fusion Latency</div>
                 </div>
             </div>
         </div>
+    </section>
 
-        <div class="controls">
-            <button id="startBtn" onclick="runDemo()">▶ Run Fusion Demo</button>
-        </div>
+    <!-- Footer -->
+    <footer>
+        <p style="font-size: 1.2rem; margin-bottom: 10px;">
+            <strong>GodView Core</strong> - Written in Rust 🦀
+        </p>
+        <p style="color: var(--text-secondary);">
+            Open source on <a href="https://github.com/Galanafai/Hivemind" target="_blank">GitHub</a>
+        </p>
+    </footer>
+
+    <!-- Demo Controls -->
+    <div class="demo-controls">
+        <button class="demo-btn" onclick="showClouds()">Show Uncertainty</button>
+        <button class="demo-btn" onclick="animateFusion()">Fuse Gaussians</button>
+        <button class="demo-btn" onclick="resetDemo()">Reset</button>
     </div>
 
     <script>
-        // GodView Demo Simulation
-        const agents = [
-            { id: '7f3a8b2c', pos: [37.77490, -122.41940], uncertainty: 5.2, color: '#ff4444' },
-            { id: '2b1c4d5e', pos: [37.77510, -122.41920], uncertainty: 3.1, color: '#44ff44' },
-            { id: 'a9e4f6g7', pos: [37.77480, -122.41950], uncertainty: 8.7, color: '#4444ff' }
-        ];
+        // Demo state
+        let demoState = 'initial';
 
-        const fusedResult = {
-            pos: [37.77493, -122.41937],
-            uncertainty: 1.8,
-            canonicalId: '2b1c4d5e'  // Min UUID wins
-        };
-
-        let isRunning = false;
-
-        async function runDemo() {
-            if (isRunning) return;
-            isRunning = true;
-            document.getElementById('startBtn').disabled = true;
-
-            // Reset
-            reset();
-            await sleep(500);
-
-            // Phase 1: Show detections
-            updatePhase('📡 Receiving agent detections...');
-            for (let i = 0; i < 3; i++) {
-                await sleep(600);
-                showAgent(i + 1);
-            }
-
-            await sleep(1000);
-
-            // Phase 2: Highlander
-            updatePhase('🏆 Highlander CRDT: Finding canonical ID...');
-            await animateHighlander();
-
-            await sleep(1000);
-
-            // Phase 3: Covariance Intersection
-            updatePhase('⚡ Covariance Intersection: Fusing Gaussians...');
-            await animateFusion();
-
-            await sleep(500);
-
-            // Phase 4: Result
-            updatePhase('✅ Fusion complete!');
-            showResult();
-
-            document.getElementById('startBtn').disabled = false;
-            document.getElementById('startBtn').textContent = '🔄 Run Again';
-            isRunning = false;
+        function startDemo() {
+            document.getElementById('problem').scrollIntoView({ behavior: 'smooth' });
+            setTimeout(showClouds, 1000);
         }
 
-        function reset() {
-            ['e1', 'e2', 'e3', 'fused', 'l1', 'l2', 'l3', 'lf', 'crosshair'].forEach(id => {
-                document.getElementById(id).classList.add('hidden');
-                document.getElementById(id).classList.remove('fadeIn');
+        function showClouds() {
+            demoState = 'clouds';
+            document.getElementById('cloudA').classList.add('visible');
+            setTimeout(() => document.getElementById('cloudB').classList.add('visible'), 300);
+            setTimeout(() => document.getElementById('cloudC').classList.add('visible'), 600);
+        }
+
+        function animateFusion() {
+            if (demoState === 'initial') showClouds();
+
+            setTimeout(() => {
+                demoState = 'fusing';
+
+                // Animate clouds moving toward center
+                const cloudA = document.getElementById('cloudA');
+                const cloudB = document.getElementById('cloudB');
+                const cloudC = document.getElementById('cloudC');
+                const cloudFused = document.getElementById('cloudFused');
+
+                cloudA.style.transition = 'all 1s ease-in-out';
+                cloudB.style.transition = 'all 1s ease-in-out';
+                cloudC.style.transition = 'all 1s ease-in-out';
+
+                cloudA.style.top = '50%';
+                cloudA.style.left = '50%';
+                cloudA.style.transform = 'translate(-50%, -50%) scale(0.5)';
+                cloudA.style.opacity = '0.3';
+
+                cloudB.style.top = '50%';
+                cloudB.style.right = '50%';
+                cloudB.style.transform = 'translate(50%, -50%) scale(0.5)';
+                cloudB.style.opacity = '0.3';
+
+                cloudC.style.bottom = '50%';
+                cloudC.style.transform = 'translate(-50%, 50%) scale(0.5)';
+                cloudC.style.opacity = '0.3';
+
+                setTimeout(() => {
+                    cloudA.style.opacity = '0';
+                    cloudB.style.opacity = '0';
+                    cloudC.style.opacity = '0';
+                    cloudFused.classList.add('visible');
+                    demoState = 'fused';
+                }, 1000);
+            }, 500);
+        }
+
+        function resetDemo() {
+            demoState = 'initial';
+            const clouds = ['cloudA', 'cloudB', 'cloudC', 'cloudFused'];
+            clouds.forEach(id => {
+                const el = document.getElementById(id);
+                el.classList.remove('visible');
+                el.style.transition = 'none';
+                el.style.opacity = '';
+                el.style.transform = '';
+                el.style.top = '';
+                el.style.left = '';
+                el.style.right = '';
+                el.style.bottom = '';
             });
-            ['a1', 'a2', 'a3'].forEach(id => {
-                document.getElementById(id).classList.remove('visible');
+
+            // Reset to original positions
+            setTimeout(() => {
+                document.getElementById('cloudA').style.cssText = '';
+                document.getElementById('cloudB').style.cssText = '';
+                document.getElementById('cloudC').style.cssText = '';
+            }, 100);
+        }
+
+        // Auto-show clouds when section is visible
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting && demoState === 'initial') {
+                    setTimeout(showClouds, 500);
+                }
             });
-            document.getElementById('result-uncertainty').textContent = '—';
-            document.getElementById('reduction').innerHTML = '';
-            document.getElementById('highlander').innerHTML = 'Waiting...';
-            document.getElementById('highlander').style.color = '#666';
-        }
+        }, { threshold: 0.5 });
 
-        function showAgent(n) {
-            const el = document.getElementById('e' + n);
-            const label = document.getElementById('l' + n);
-            const item = document.getElementById('a' + n);
-
-            el.classList.remove('hidden');
-            el.classList.add('fadeIn', 'pulsing');
-            label.classList.remove('hidden');
-            label.classList.add('fadeIn');
-            item.classList.add('visible');
-        }
-
-        async function animateHighlander() {
-            const highlander = document.getElementById('highlander');
-
-            highlander.innerHTML = '<span style="color: #ff4444;">7f3a...</span> comparing...';
-            await sleep(600);
-
-            highlander.innerHTML = '<span style="color: #ff4444;">7f3a...</span> → <span style="color: #44ff44;">2b1c...</span> ✓';
-            await sleep(600);
-
-            highlander.innerHTML += '<br><span style="color: #4444ff;">a9e4...</span> → <span style="color: #44ff44;">2b1c...</span> ✓';
-            await sleep(600);
-
-            highlander.innerHTML += '<br><br><strong style="color: #00ff88;">Winner: 2b1c...</strong>';
-            highlander.style.color = '#fff';
-        }
-
-        async function animateFusion() {
-            const e1 = document.getElementById('e1');
-            const e2 = document.getElementById('e2');
-            const e3 = document.getElementById('e3');
-            const fused = document.getElementById('fused');
-
-            // Animate ellipses moving toward center
-            e1.style.transition = 'all 1.5s ease-in-out';
-            e2.style.transition = 'all 1.5s ease-in-out';
-            e3.style.transition = 'all 1.5s ease-in-out';
-
-            e1.setAttribute('cx', '280');
-            e1.setAttribute('cy', '195');
-            e1.setAttribute('rx', '40');
-            e1.setAttribute('ry', '25');
-            e1.style.fillOpacity = '0.15';
-
-            e2.setAttribute('cx', '280');
-            e2.setAttribute('cy', '195');
-            e2.setAttribute('rx', '35');
-            e2.setAttribute('ry', '22');
-            e2.style.fillOpacity = '0.15';
-
-            e3.setAttribute('cx', '280');
-            e3.setAttribute('cy', '195');
-            e3.setAttribute('rx', '45');
-            e3.setAttribute('ry', '30');
-            e3.style.fillOpacity = '0.15';
-
-            await sleep(1500);
-
-            // Hide individual ellipses, show fused
-            e1.style.opacity = '0';
-            e2.style.opacity = '0';
-            e3.style.opacity = '0';
-
-            document.getElementById('l1').style.opacity = '0';
-            document.getElementById('l2').style.opacity = '0';
-            document.getElementById('l3').style.opacity = '0';
-
-            fused.classList.remove('hidden');
-            fused.classList.add('fadeIn', 'pulsing');
-
-            document.getElementById('lf').classList.remove('hidden');
-            document.getElementById('lf').classList.add('fadeIn');
-
-            document.getElementById('crosshair').classList.remove('hidden');
-            document.getElementById('crosshair').classList.add('fadeIn');
-        }
-
-        function showResult() {
-            const uncertainty = fusedResult.uncertainty;
-            const original = agents.reduce((sum, a) => sum + a.uncertainty, 0) / agents.length;
-            const reduction = Math.round((1 - uncertainty / original) * 100);
-
-            document.getElementById('result-uncertainty').textContent = `± ${uncertainty}m`;
-            document.getElementById('result-uncertainty').style.color = '#00ff88';
-
-            document.getElementById('reduction').innerHTML =
-                `<span class="reduction-badge">-${reduction}% uncertainty</span>`;
-        }
-
-        function updatePhase(text) {
-            document.getElementById('phase').textContent = text;
-        }
-
-        function sleep(ms) {
-            return new Promise(resolve => setTimeout(resolve, ms));
-        }
+        observer.observe(document.getElementById('cityScene'));
     </script>
 </body>
 
