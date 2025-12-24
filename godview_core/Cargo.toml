@@ -6,6 +6,11 @@ authors = ["GodView Team"]
 description = "High-precision distributed spatial computing protocol library"
 license = "MIT"
 
+[features]
+default = []
+visualization = ["rerun"]
+kitti = ["kitti-dataset"]
+
 [dependencies]
 # Math & Physics (The "Time" Engine)
 nalgebra = { version = "0.33", features = ["serde-serialize"] }
@@ -27,5 +32,20 @@ serde_json = "1.0"
 thiserror = "1.0"
 uuid = { version = "1.7", features = ["v4", "serde"] }
 
+# Visualization (Optional)
+rerun = { version = "0.20", optional = true }
+
+# KITTI Dataset Loader (Optional)
+kitti-dataset = { version = "0.3", optional = true }
+
 [dev-dependencies]
 approx = "0.5"
+
+[[example]]
+name = "rerun_demo"
+required-features = ["visualization"]
+
+[[example]]
+name = "kitti_demo"
+required-features = ["visualization", "kitti"]
+

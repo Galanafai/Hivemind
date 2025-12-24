@@ -11,8 +11,14 @@ pub mod godview_space;
 pub mod godview_trust;
 pub mod godview_tracking;
 
+#[cfg(feature = "visualization")]
+pub mod visualization;
+
 // Re-export key types for convenience
 pub use godview_time::AugmentedStateFilter;
 pub use godview_space::{Entity, SpatialEngine, WorldShard};
 pub use godview_trust::{AuthError, SecurityContext, SignedPacket};
 pub use godview_tracking::{GlobalHazardPacket, TrackManager, TrackingConfig, TrackingError, UniqueTrack};
+
+#[cfg(feature = "visualization")]
+pub use visualization::RerunVisualizer;

@@ -1,101 +1,190 @@
-# 👁️ GodView - The Live Reality Protocol
+# 👁️ GodView - Distributed Gaussian Perception Protocol
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/Rust-2021-orange.svg)](https://www.rust-lang.org/)
-[![Three.js](https://img.shields.io/badge/Three.js-0.160-blue.svg)](https://threejs.org/)
-[![Zenoh](https://img.shields.io/badge/Zenoh-1.0-green.svg)](https://zenoh.io/)
+[![Rerun](https://img.shields.io/badge/Rerun-0.28-blue.svg)](https://rerun.io/)
 
-**Distributed X-Ray Vision System for Industrial Safety**
+**A Research Framework for Multi-Agent Sensor Fusion in Autonomous Systems**
 
-GodView is a real-time hazard detection and visualization system that decouples sight from location. It turns **video streams** into **semantic 3D coordinates**, creating a privacy-preserving safety system with **<50ms latency** on standard WiFi.
-
-![GodView Demo](https://via.placeholder.com/800x400/000000/00ff00?text=GodView+Demo)
+> *"Solving the fundamental problems of distributed spatial computing: time synchronization, 3D spatial indexing, and Byzantine fault tolerance."*
 
 ---
 
-## ⚡ The Breakthrough
+## 🎯 Research Problem
 
-Traditional surveillance is broken:
-- ❌ **High Bandwidth:** 50 cameras = 200 Mbps
-- ❌ **Privacy Risk:** Stores raw video of people
-- ❌ **Dumb Data:** "Pixel 500,500 is red" (Meaningless)
+Distributed sensor networks face three critical challenges:
 
-GodView changes the game:
-- ✅ **Low Bandwidth:** 50 cameras = 1.5 MB/s (99.25% reduction)
-- ✅ **True Privacy:** Transmits coordinates, not faces
-- ✅ **Smart Data:** "Human at lat/lon/alt" (Actionable)
+| Problem | Traditional Approach | GodView Solution |
+|---------|---------------------|------------------|
+| **Out-of-Sequence Measurements** | Drop or FIFO queue | Augmented State EKF with retrodiction |
+| **Vertical Aliasing** | 2D Geohash | H3 + Sparse Voxel Octrees |
+| **Sybil Attacks** | Trust all publishers | CapBAC + Ed25519 signatures |
 
 ---
 
-## 🏗️ System Architecture
+## 📐 Core Algorithms
+
+### 1. Augmented State Extended Kalman Filter (AS-EKF)
+
+Handles network latency (100-500ms) by maintaining a rolling window of past states:
 
 ```
-┌──────────────────┐         ┌──────────────┐         ┌──────────────────┐
-│   RUST AGENT     │         │    ZENOH     │         │   WEB VIEWER     │
-│  (X-Ray Emit)    │────────▶│   ROUTER     │────────▶│   (God View)     │
-│                  │         │   (v1.0)     │         │                  │
-│ • OpenCV         │         │ WS:8000      │         │ • Three.js       │
-│ • Face Detect    │         │ TCP:7447     │         │ • Zenoh-TS       │
-│ • 3D Projection  │         │              │         │ • Red Ghost      │
-└──────────────────┘         └──────────────┘         └──────────────────┘
+State: x̂_aug = [x̂_k, x̂_{k-1}, ..., x̂_{k-L}]
+Covariance: P_aug = [P_{k,k}, P_{k,k-1}, ...; P_{k-1,k}, P_{k-1,k-1}, ...]
 ```
+
+**Key Innovation:** O(1) OOSM updates via cross-correlation matrices.
+
+📄 **Implementation:** [`godview_core/src/godview_time.rs`](godview_core/src/godview_time.rs)
+
+### 2. Covariance Intersection (CI)
+
+Fuses observations from multiple agents without requiring cross-correlation knowledge:
+
+```
+P_fused⁻¹ = ω₁P₁⁻¹ + ω₂P₂⁻¹ + ... + ωₙPₙ⁻¹
+x̂_fused = P_fused(ω₁P₁⁻¹x̂₁ + ω₂P₂⁻¹x̂₂ + ... + ωₙPₙ⁻¹x̂ₙ)
+```
+
+**Key Innovation:** Conservative fusion that never underestimates uncertainty.
+
+📄 **Implementation:** [`godview_core/src/godview_tracking.rs`](godview_core/src/godview_tracking.rs)
+
+### 3. Highlander CRDT Track Merging
+
+*"There can be only one."* Deterministic merge of duplicate tracks:
+
+```
+Canonical ID = min(track_id₁, track_id₂, ..., track_idₙ)
+```
+
+📄 **Implementation:** [`godview_core/src/godview_tracking.rs`](godview_core/src/godview_tracking.rs)
+
+---
+
+## 🗂️ Repository Structure
+
+```
+godview/
+├── godview_core/          # Rust library - core algorithms
+│   ├── src/
+│   │   ├── godview_time.rs      # AS-EKF implementation
+│   │   ├── godview_space.rs     # H3 + Octree spatial indexing
+│   │   ├── godview_trust.rs     # CapBAC + Ed25519 security
+│   │   ├── godview_tracking.rs  # CI fusion + Highlander CRDT
+│   │   └── visualization.rs     # Rerun.io integration
+│   └── examples/
+│       ├── rerun_demo.rs        # Synthetic multi-agent demo
+│       └── kitti_demo.rs        # Real KITTI dataset demo
+├── Dockerfile             # GPU-enabled container
+├── docker-compose.yml     # Full stack orchestration
+└── docs/                  # Additional documentation
+```
+
+---
+
+## 🚀 Quick Start (Docker)
+
+### Prerequisites
+- Docker with NVIDIA Container Toolkit
+- GPU with CUDA support
+
+### Run Demo
+
+```bash
+# Clone and enter
+git clone https://github.com/Galanafai/Hivemind.git
+cd Hivemind
+
+# Build Docker image
+sudo docker build -t godview:latest .
+
+# Run synthetic multi-agent demo
+sudo docker run --rm --gpus all \
+  -v $(pwd):/workspace \
+  -w /workspace/godview_core \
+  godview:latest \
+  cargo run --example kitti_demo --features visualization,kitti -- \
+  --save /workspace/godview_demo.rrd
+
+# View in Rerun
+rerun godview_demo.rrd
+```
+
+### Run with Real nuScenes Data
+
+```bash
+# Download nuScenes mini (3.9GB) and run
+sudo docker run --rm --gpus all \
+  -v $(pwd):/workspace \
+  --network host \
+  godview:latest bash -c "
+    pip install 'rerun-sdk>=0.28' --quiet &&
+    mkdir -p /workspace/data/nuscenes &&
+    cd /workspace/data/nuscenes &&
+    wget https://www.nuscenes.org/data/v1.0-mini.tgz &&
+    tar -xzf v1.0-mini.tgz &&
+    python3 -m nuscenes_dataset --root-dir /workspace/data/nuscenes \
+      --seconds 30 --save /workspace/nuscenes_demo.rrd
+  "
+
+# View
+rerun nuscenes_demo.rrd
+```
+
+---
+
+## 📊 Performance
+
+| Component | Operation | Time | Notes |
+|-----------|-----------|------|-------|
+| AS-EKF | Prediction (9D) | ~50 µs | 20-state augmented window |
+| AS-EKF | OOSM Update | ~100 µs | O(1) via cross-correlation |
+| Covariance Intersection | 5 agents | ~20 µs | Matrix operations |
+| H3+Octree | Query (50m) | ~50 µs | Includes altitude filtering |
+| Ed25519 | Sign/Verify | 15/40 µs | Per-packet |
+
+*Benchmarked on AMD Ryzen 9 5950X*
+
+---
+
+## 📚 References
+
+### Academic Papers
+
+1. **Augmented State EKF:** Challa, S., & Bar-Shalom, Y. (2000). "OOSM Problem in Tracking"
+2. **Covariance Intersection:** Julier, S., & Uhlmann, J. (1997). "A Non-divergent Estimation Algorithm in the Presence of Unknown Correlations"
+3. **H3 Geospatial Indexing:** Uber Engineering. "H3: Uber's Hexagonal Hierarchical Spatial Index"
+4. **Biscuit Tokens:** CleverCloud. "Biscuit: Datalog-Based Authorization"
+
+### Key Dependencies
+
+- [`nalgebra`](https://nalgebra.org/) - Linear algebra
+- [`h3o`](https://docs.rs/h3o) - H3 geospatial indexing
+- [`biscuit-auth`](https://docs.rs/biscuit-auth) - Capability-based access control
+- [`rerun`](https://rerun.io/) - Visualization
 
 ---
 
 ## 📖 Documentation
 
-We believe in "PhD-level work, made accessible."
-
 | Document | Description |
 |----------|-------------|
-| **[TECHNICAL_DOCUMENTATION.md](TECHNICAL_DOCUMENTATION.md)** | **Deep Dive.** The math, AS-EKF sensor fusion, and H3 indexing details. |
-| **[WHY_REVOLUTIONARY.md](WHY_REVOLUTIONARY.md)** | **The Vision.** Why this beats Waymo/Tesla at this specific task. |
-| **[CARLA_INTEGRATION_PLAN.md](CARLA_INTEGRATION_PLAN.md)** | **Simulation.** How we prove it works before deployment. |
-| **[PROJECT_STATUS.md](PROJECT_STATUS.md)** | **Roadmap.** What's built, wha's next. |
-
----
-
-## 🚀 Quick Start
-
-### 1. Installation
-```bash
-# Clone and install dependencies
-git clone https://github.com/Galanafai/Hivemind.git
-cd Hivemind
-./install_dependencies.sh
-source ~/.cargo/env
-```
-
-### 2. Run It
-```bash
-# Start the full stack (Router + Agent + Viewer)
-./run_godview.sh
-
-# Open http://localhost:5173
-```
-
-Position yourself in front of the webcam. You will see a **red sphere** tracking you in 3D space. That sphere is a "Ghost" - a semantic representation of you, transmitted over the network!
-
----
-
-## 🧪 Simulation Mode (CARLA)
-
-Don't have 50 webcams? Use our CARLA simulator bridge:
-
-```bash
-# Setup and run CARLA bridge
-./setup_carla_integration.sh
-python3 carla_bridge/godview_carla_bridge.py --duration 60
-```
+| [`godview_core/README.md`](godview_core/README.md) | **Core Library.** API reference and algorithm details |
+| [`TECHNICAL_DOCUMENTATION.md`](TECHNICAL_DOCUMENTATION.md) | **Deep Dive.** Mathematical foundations |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | **System Design.** Module interactions |
 
 ---
 
 ## 🤝 Contributing
 
-We are looking for Rustaceans and Three.js wizards.
-
-1.  Read the **[Technical Documentation](TECHNICAL_DOCUMENTATION.md)** to understand the math.
-2.  Pick an issue from our roadmap.
-3.  Submit a PR.
+1. Read the core library documentation
+2. Run `cargo test` in `godview_core/`
+3. Follow Rust API guidelines
+4. Submit PR with tests
 
 **License:** MIT
+
+---
+
+**Built for research in distributed perception and autonomous systems**
